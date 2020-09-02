@@ -1,7 +1,10 @@
 use std::path::Path;
 use std::path::PathBuf;
+use std::fs::File;
 use std::fs::ReadDir;
 use std::fs::DirEntry;
+use std::io::BufRead;
+use std::io::BufReader;
 use colored::*;
 
 fn get_file_list() -> ReadDir {
@@ -30,17 +33,43 @@ fn get_m3u_files(files: ReadDir) -> Vec<PathBuf> {
   m3u_files
 }
 
-fn get_file_name(path: PathBuf) -> Option<String> {
+fn get_file_name(path: &PathBuf) -> Option<String> {
   path.file_name()
     .and_then(|f| f.to_str())
     .map(String::from)
 }
 
+fn read_playlist(playlist: &PathBuf) -> Vec<PathBuf> {
+  let mut playlist_paths: Vec<PathBuf> = Vec::new();
+  let file = File::open(playlist);
+  if let Ok(f) = file {
+    let reader = BufReader::new(&f);
+    for line in reader.lines() {
+      if let Ok(text) = line {
+        playlist_paths.push(Path::new(&text).to_path_buf());
+      }
+    }
+  }
+  playlist_paths
+}
+
 fn main() {
   let playlists = get_m3u_files(get_file_list());
-  for pl in playlists.into_iter().map(get_file_name).collect::<Vec<_>>() {
-    if let Some(filename) = pl {
-      println!("{}", filename.blue());
+  for playlist in playlists {
+    let filename = get_file_name(&playlist);
+    if let Some(f) = filename {
+      println!("{}", f.blue());
+    } else {
+      continue;
+    }
+    
+    let paths = read_playlist(&playlist);
+    for path in paths {
+      let pathstr = path.to_str().unwrap();
+      match path.exists() {
+        true => println!("\t{}", pathstr.cyan()),
+        false => println!("\t{}", pathstr.red()),
+      }
     }
   }
 }
