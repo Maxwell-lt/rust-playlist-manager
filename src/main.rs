@@ -73,3 +73,18 @@ fn main() {
     }
   }
 }
+
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  #[test]
+  fn get_filename() {
+    let file_path = "dir1/dir2/filename.ext";
+    if let Some(file_name) = get_file_name(&Path::new(file_path).to_path_buf()) {
+      assert!(file_name == "filename.ext");
+    } else {
+      assert!(false);
+    }
+  }
+}
