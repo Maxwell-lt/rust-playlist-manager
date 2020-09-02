@@ -78,6 +78,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
   use super::*;
+
   #[test]
   fn get_filename() {
     let file_path = "dir1/dir2/filename.ext";
@@ -86,5 +87,15 @@ mod tests {
     } else {
       assert!(false);
     }
+  }
+
+  #[test]
+  fn get_playlists() {
+    let dir = tempfile::tempdir().expect("Could not instantiate test dir");
+    let path = dir.path();
+    File::create(path.join("playlist1.m3u")).unwrap();
+    File::create(path.join("playlist2.m3u")).unwrap();
+    let playlists = get_m3u_files(path.read_dir().expect("Could not read temp dir"));
+    assert_eq!(playlists.len(), 2);
   }
 }

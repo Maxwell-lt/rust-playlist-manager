@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 colored = "2.0.0"
+tempfile = "3.1.0"
