@@ -8,6 +8,7 @@ stdenv.mkDerivation {
   buildInputs = [
     # to use the latest nightly:
     nixpkgs.latest.rustChannels.nightly.rust
+    ncurses
    ];
   RUST_BACKTRACE = 1;
 }

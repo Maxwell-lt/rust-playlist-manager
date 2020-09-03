@@ -7,6 +7,10 @@ use std::io::BufRead;
 use std::io::BufReader;
 use std::collections::HashMap;
 use colored::*;
+use cursive::Cursive;
+use cursive::views::{Button, Dialog, DummyView, EditView,
+                     LinearLayout, SelectView};
+use cursive::traits::*;
 
 fn get_file_list() -> ReadDir {
   Path::new(".").read_dir().expect("Could not read directory contents")
@@ -63,7 +67,7 @@ fn read_playlists(file_listing: &Vec<PathBuf>) -> HashMap<PathBuf, Vec<PathBuf>>
   playlist_map
 }
 
-fn main() {
+fn main() {  
   let playlist_files = get_m3u_files(get_file_list());
   let playlist_data = read_playlists(&playlist_files);
 
@@ -76,6 +80,17 @@ fn main() {
       }
     }
   }
+
+  let mut siv = cursive::default();
+  let mut select = SelectView::new();
+  for (filename, _) in playlist_data {
+    select.add_item(get_file_name(&filename).unwrap(), filename);
+  }
+  siv.add_layer(Dialog::around(LinearLayout::horizontal()
+    .child(select)
+    .child(Button::new("Quit", Cursive::quit))));
+  siv.add_global_callback('q', |s| s.quit());
+  siv.run();
 }
 
 
