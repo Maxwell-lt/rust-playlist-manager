@@ -5,6 +5,7 @@ use std::fs::ReadDir;
 use std::fs::DirEntry;
 use std::io::BufRead;
 use std::io::BufReader;
+use std::collections::HashMap;
 use colored::*;
 
 fn get_file_list() -> ReadDir {
@@ -53,22 +54,25 @@ fn read_playlist(playlist: &PathBuf) -> Vec<PathBuf> {
   playlist_paths
 }
 
-fn main() {
-  let playlists = get_m3u_files(get_file_list());
-  for playlist in playlists {
-    let filename = get_file_name(&playlist);
-    if let Some(f) = filename {
-      println!("{}", f.blue());
-    } else {
-      continue;
-    }
-    
+fn read_playlists(file_listing: &Vec<PathBuf>) -> HashMap<PathBuf, Vec<PathBuf>> {
+  let mut playlist_map: HashMap<PathBuf, Vec<PathBuf>> = HashMap::new();
+  for playlist in file_listing {
     let paths = read_playlist(&playlist);
-    for path in paths {
-      let pathstr = path.to_str().unwrap();
-      match path.exists() {
-        true => println!("\t{}", pathstr.cyan()),
-        false => println!("\t{}", pathstr.red()),
+    playlist_map.insert(playlist.to_path_buf(), paths);
+  }
+  playlist_map
+}
+
+fn main() {
+  let playlist_files = get_m3u_files(get_file_list());
+  let playlist_data = read_playlists(&playlist_files);
+
+  for (filename, filelist) in &playlist_data {
+    println!("{}", get_file_name(filename).unwrap().blue());
+    for file in filelist {
+      match file.exists() {
+        true => println!("\t{}", file.to_str().unwrap().cyan()),
+        false => println!("\t{}", file.to_str().unwrap().red()),
       }
     }
   }
