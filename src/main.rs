@@ -6,11 +6,8 @@ use std::fs::DirEntry;
 use std::io::BufRead;
 use std::io::BufReader;
 use std::collections::HashMap;
-use colored::*;
 use cursive::Cursive;
-use cursive::views::{Button, Dialog, DummyView, EditView,
-                     LinearLayout, SelectView};
-use cursive::traits::*;
+use cursive::views::{Button, Dialog, ScrollView, LinearLayout, SelectView};
 
 fn get_file_list() -> ReadDir {
   Path::new(".").read_dir().expect("Could not read directory contents")
@@ -71,18 +68,9 @@ fn main() {
   let playlist_files = get_m3u_files(get_file_list());
   let playlist_data = read_playlists(&playlist_files);
 
-  for (filename, filelist) in &playlist_data {
-    println!("{}", get_file_name(filename).unwrap().blue());
-    for file in filelist {
-      match file.exists() {
-        true => println!("\t{}", file.to_str().unwrap().cyan()),
-        false => println!("\t{}", file.to_str().unwrap().red()),
-      }
-    }
-  }
-
   let mut siv = cursive::default();
-  let mut select = SelectView::new();
+  let mut select = SelectView::new()
+    .on_submit(on_select);
   for (filename, _) in playlist_data {
     select.add_item(get_file_name(&filename).unwrap(), filename);
   }
@@ -91,6 +79,25 @@ fn main() {
     .child(Button::new("Quit", Cursive::quit))));
   siv.add_global_callback('q', |s| s.quit());
   siv.run();
+}
+
+fn on_select(s: &mut Cursive, name: &PathBuf) {
+  let playlist_data = read_playlists(&get_m3u_files(get_file_list()));
+  let mut files = Vec::<String>::new();
+  let playlist_name = name.to_str().unwrap();
+  for (filename, filelist) in playlist_data {
+    if &filename == name {
+      for file in filelist {
+        files.push(get_file_name(&file).unwrap());
+      }
+      break;
+    }
+  }
+  s.add_layer(ScrollView::new(Dialog::text(format!("{}", files.join("\n")))
+    .title(format!("{}", playlist_name))
+    .button("Close", |s| {
+      s.pop_layer();
+    })));
 }
 
 
